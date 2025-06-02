@@ -40,6 +40,7 @@ export default function Home() {
 
   const handleNumberClick = async (num: number) => {
     setModalOpen(true);
+    console.log(num);
     // try {
     //   const res = await axios.get(`${API_URL}/number-info/${num}`);
     //   const { isTaken, chosenBy } = res.data;

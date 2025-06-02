@@ -1,5 +1,5 @@
 "use client";
-import { successToast, errorToast } from "@/utils/toast";
+import { errorToast } from "@/utils/toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,9 +15,7 @@ import {
 import { GoldenTicketModal } from "@/components/GoldenTicket";
 
 export default function Home() {
-  const [numbers, setNumbers] = useState<number[]>(
-    [...Array(40)].map((_, index) => index + 1)
-  );
+  const numbers = [...Array(40)].map((_, index) => index + 1);
   const [notChooseNumbers, setNotChooseNumbers] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [inviteId, setInviteId] = useState("");
@@ -59,6 +57,7 @@ export default function Home() {
 
   const handleConfirm = async () => {
     if (!selected || !inviteId) {
+      setSelected(null);
       alert("Preencha o código do convite");
       return;
     }
@@ -104,15 +103,17 @@ export default function Home() {
                   onClick={() => handleNumberClick(num)}
                   className="cursor-pointer flex items-center justify-center bg-white shadow-sm shadow-gray-300 hover:bg-gray-100 p-2"
                 >
-                  <CardContent className="p-2">{num}</CardContent>
+                  <CardContent className="p-2 text-2xl">{num}</CardContent>
                 </Card>
               ) : (
                 <Card
                   key={num}
                   onClick={() => handleNumberInfo(num)}
-                  className="flex items-center justify-center bg-gray-300 text-black/80 shadow-sm shadow-white font-bold p-2 cursor-pointer"
+                  className="flex items-center justify-center bg-gray-500 text-black/80 shadow-sm shadow-white font-bold p-2 cursor-pointer"
                 >
-                  <CardContent className="p-2 text-sm">{num}</CardContent>
+                  <CardContent className="p-2 text-2xl text-white">
+                    {num}
+                  </CardContent>
                 </Card>
               )
             )}

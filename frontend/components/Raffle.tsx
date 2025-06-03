@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import QRCode from "react-qr-code";
-import { Button } from "@/components/ui/button";
 import { api } from "@/utils/api";
 import Tentacao from "./Tentacao";
 
@@ -13,6 +11,17 @@ export default function Raffle() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
 
+  console.log(
+    winner,
+    isRunning,
+    setWinner,
+    setIsRunning,
+    currentIndex,
+    setCurrentIndex,
+    intervalId,
+    setIntervalId
+  );
+
   useEffect(() => {
     const fetchEntries = async () => {
       const res = await api.get("sorteio/");
@@ -20,31 +29,6 @@ export default function Raffle() {
     };
     fetchEntries();
   }, []);
-
-  const startSpin = () => {
-    if (entries.length === 0) return;
-
-    setIsRunning(true);
-    setWinner(null);
-
-    const id = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % entries.length);
-    }, 100); // Velocidade do giro: menor é mais rápido
-
-    setIntervalId(id);
-  };
-
-  const stopSpin = () => {
-    if (intervalId) {
-      clearInterval(intervalId);
-      setIntervalId(null);
-    }
-
-    setIsRunning(false);
-
-    const selected = entries[currentIndex];
-    setWinner(selected);
-  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">

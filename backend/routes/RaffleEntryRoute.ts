@@ -66,6 +66,7 @@ router.post(
         message: "Número escolhido com sucesso!",
         qrcodeToken,
         qrCodeData,
+        chosenBy: invitation.invitedName,
       });
     } catch (error) {
       console.error(error);

@@ -54,8 +54,9 @@ export default function HostScanner() {
     liberarVencedor(decodedText);
   }
 
-  function onScanFailure(error: any) {
+  function onScanFailure(error: string) {
     // Pode ignorar erros frequentes de leitura
+    console.log(error);
   }
 
   async function liberarVencedor(token: string) {
@@ -75,8 +76,14 @@ export default function HostScanner() {
         const json = await res.json();
         setMessage("❌ Erro: " + (json.message || "Não autorizado"));
       }
-    } catch (error: any) {
-      setMessage("Erro na requisição: " + error?.message || error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setMessage("Erro na requisição: " + error.message);
+      } else if (typeof error === "string") {
+        setMessage("Erro na requisição: " + error);
+      } else {
+        setMessage("Erro desconhecido na requisição.");
+      }
     } finally {
       // Reiniciar leitura
       if (cameraIdRef.current && html5QrCodeRef.current) {
@@ -87,9 +94,10 @@ export default function HostScanner() {
             onScanSuccess,
             onScanFailure
           )
-          .catch((err) =>
-            setMessage("Erro ao reiniciar câmera: " + (err?.message || err))
-          );
+          .catch((err) => {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            setMessage("Erro ao reiniciar câmera: " + errMsg);
+          });
       }
     }
   }

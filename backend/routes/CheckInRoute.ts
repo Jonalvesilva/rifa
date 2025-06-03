@@ -19,7 +19,7 @@ router.post("/check-in", async (req, res) => {
     return;
   }
 
-  if (invitation.used) {
+  if (invitation.inParty) {
     res.status(409).json({
       message: `Convite já utilizado por ${
         invitation.invitedName || "convidado"
@@ -29,7 +29,7 @@ router.post("/check-in", async (req, res) => {
   }
 
   // Marca como usado
-  invitation.used = true;
+  invitation.inParty = true;
   await invitation.save();
 
   res.status(200).json({

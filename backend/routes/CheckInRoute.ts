@@ -4,7 +4,7 @@ import { InvitationModel } from "../models/Invitation";
 
 const router = express.Router();
 
-router.post("/check-in", async (req, res) => {
+router.post("/", async (req, res) => {
   const { inviteId } = req.body;
 
   if (!inviteId) {

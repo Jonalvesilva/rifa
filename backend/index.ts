@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { connectDB } from "./db/db";
 import RaffleEntryRoute from "./routes/RaffleEntryRoute";
 import RaffleScanRoute from "./routes/RaffleScanRoute";
+import CheckInRoute from "./routes/CheckInRoute";
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use("/", RaffleEntryRoute);
 app.use("/scan", RaffleScanRoute);
+app.use("/check-in", CheckInRoute);
 
 const PORT = process.env.PORT || 3001;
 

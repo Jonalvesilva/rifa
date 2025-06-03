@@ -1,5 +1,5 @@
 "use client";
-import { errorToast } from "@/utils/toast";
+import { errorToast, successToast } from "@/utils/toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,41 +40,34 @@ export default function Home() {
 
   const handleNumberClick = async (num: number) => {
     setModalOpen(true);
-    console.log(num);
-    // try {
-    //   const res = await axios.get(`${API_URL}/number-info/${num}`);
-    //   const { isTaken, chosenBy } = res.data;
-    //   if (isTaken) {
-    //     alert(`Número ${num} já foi escolhido por: ${chosenBy}`);
-    //   } else {
-    //     setSelected(num);
-    //     setModalOpen(true);
-    //   }
-    // } catch (error) {
-    //   console.error(error);
-    //   alert("Erro ao verificar número");
-    // }
+    setSelected(num);
   };
 
   const handleConfirm = async () => {
     if (!selected || !inviteId) {
-      setSelected(null);
-      alert("Preencha o código do convite");
+      errorToast("Preencha o código do convite");
       return;
     }
 
-    // try {
-    //   await axios.post(`${API_URL}/choose-number`, { number: selected, inviteId });
-    //   alert("Número escolhido com sucesso!");
-    //   setModalOpen(false);
-    //   setInviteId("");
+    try {
+      const response = await api.post(`/choose-number`, {
+        number: selected,
+        inviteId,
+      });
+      successToast(
+        `Número escolhido com sucesso! Boa sorte, ${response.data.chosenBy}!`
+      );
 
-    //   // Atualizar números após escolher
-    //   const res = await axios.get(`${API_URL}/available-numbers`);
-    //   setNumbers(res.data.numbers);
-    // } catch (err: any) {
-    //   alert(err.response?.data?.message || "Erro ao escolher número");
-    // }
+      setModalOpen(false);
+      setInviteId("");
+      setSelected(null);
+
+      // Atualizar números após escolher
+      const res = await api.get(`/numbers`);
+      setNotChooseNumbers(res.data.availableNumbers);
+    } catch (err: any) {
+      errorToast(err.response?.data?.message || "Erro ao escolher número");
+    }
   };
 
   const handleNumberInfo = async (num: number) => {
@@ -123,7 +116,7 @@ export default function Home() {
           <Dialog open={modalOpen} onOpenChange={setModalOpen}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Confirmar Escolha</DialogTitle>
+                <DialogTitle>Confirmar Escolha - Numero {selected}</DialogTitle>
               </DialogHeader>
 
               <Input

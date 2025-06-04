@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { api } from "@/utils/api";
+import { useParams } from "next/navigation";
 
 export default function HostScanner() {
   const qrRegionId = "qr-reader";
@@ -12,6 +13,7 @@ export default function HostScanner() {
     message: string;
     color: "green" | "red";
   } | null>(null);
+  const senha = useParams().senha;
 
   useEffect(() => {
     html5QrCodeRef.current = new Html5Qrcode(qrRegionId);
@@ -54,7 +56,7 @@ export default function HostScanner() {
         { token },
         {
           headers: {
-            "device-id": "SEU_DEVICE_ID_SEGREDO",
+            "device-id": senha,
           },
         }
       );

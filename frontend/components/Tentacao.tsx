@@ -1,25 +1,29 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import QRCode from "react-qr-code";
+import { api } from "@/utils/api";
 
 export default function Tentacao({ entries }: { entries: any[] }) {
   const [spinning, setSpinning] = useState(false);
   const [winner, setWinner] = useState<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null); // container externo (centralizado)
-  const stripRef = useRef<HTMLDivElement>(null); // faixa interna que anima horizontalmente
+  const [winnerPopup, setWinnerPopup] = useState(false);
+  const [speed, setSpeed] = useState(0);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
   const positionRef = useRef(0);
+  const faceWidth = 200 + 16;
+  const containerWidth = 400;
 
-  const faceWidth = 200 + 16; // largura da face + margin
-  const containerWidth = 400; // largura da moldura
-
+  // Gira o pião
   useEffect(() => {
     let animationFrameId: number;
 
-    const step = () => {
-      if (!spinning) return;
+    const animate = () => {
+      if (speed <= 0) return;
 
-      positionRef.current -= 2.2;
+      positionRef.current -= speed;
 
       if (Math.abs(positionRef.current) >= entries.length * faceWidth) {
         positionRef.current = 0;
@@ -29,46 +33,110 @@ export default function Tentacao({ entries }: { entries: any[] }) {
         stripRef.current.style.transform = `translateX(${positionRef.current}px)`;
       }
 
-      animationFrameId = requestAnimationFrame(step);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
-    animationFrameId = requestAnimationFrame(step);
+    if (speed > 0) {
+      animationFrameId = requestAnimationFrame(animate);
+    }
 
     return () => cancelAnimationFrame(animationFrameId);
-  }, [spinning, entries.length]);
+  }, [speed, entries.length]);
 
-  const handleStop = () => {
-    setSpinning(false);
-
-    const winnerIndex =
-      Math.abs(Math.round(positionRef.current / faceWidth)) % entries.length;
-
-    setWinner(entries[winnerIndex]);
-
-    // Offset para centralizar o QR code vencedor na moldura
-    const offset = containerWidth / 2 - faceWidth / 2;
-
-    positionRef.current = -winnerIndex * faceWidth + offset;
-
-    if (stripRef.current) {
-      stripRef.current.style.transition = "transform 1.5s ease-out";
-      stripRef.current.style.transform = `translateX(${positionRef.current}px)`;
-
-      setTimeout(() => {
-        if (stripRef.current) {
-          stripRef.current.style.transition = "";
-        }
-      }, 1600);
-    }
-  };
-
-  const handleStart = () => {
+  // Inicia o sorteio
+  const iniciarSorteio = () => {
     setWinner(null);
+    setWinnerPopup(false);
     setSpinning(true);
+    setSpeed(3.5);
+
+    setTimeout(() => {
+      let currentSpeed = 3.5;
+      const deceleration = setInterval(() => {
+        currentSpeed -= 0.05;
+
+        if (currentSpeed <= 0.05) {
+          clearInterval(deceleration);
+          setSpeed(0);
+          setSpinning(false);
+
+          // 👉 Centraliza o QR Code mais próximo do centro
+          const offset = containerWidth / 2 - faceWidth / 2;
+          const totalFaces = entries.length;
+          let index = Math.round(-positionRef.current / faceWidth) % totalFaces;
+          if (index < 0) index += totalFaces; // evita índice negativo
+
+          positionRef.current = -index * faceWidth + offset;
+
+          if (stripRef.current) {
+            stripRef.current.style.transition = "transform 1.5s ease-out";
+            stripRef.current.style.transform = `translateX(${positionRef.current}px)`;
+            setTimeout(() => {
+              if (stripRef.current) stripRef.current.style.transition = "";
+            }, 1600);
+          }
+        } else {
+          setSpeed(currentSpeed);
+        }
+      }, 200);
+    }, 20000);
   };
+
+  // Polling para checar vencedor
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (winner || !spinning) return;
+
+      try {
+        const res = await api.get("scan/winner");
+        const data = res.data;
+
+        setWinner(data);
+        setWinnerPopup(true);
+
+        // Centraliza o vencedor
+        const winnerIndex = entries.findIndex(
+          (e) => e.qrcodeToken === data.qrcodeToken
+        );
+        if (winnerIndex !== -1) {
+          const offset = containerWidth / 2 - faceWidth / 2;
+          positionRef.current = -winnerIndex * faceWidth + offset;
+
+          if (stripRef.current) {
+            stripRef.current.style.transition = "transform 1.5s ease-out";
+            stripRef.current.style.transform = `translateX(${positionRef.current}px)`;
+            setTimeout(() => {
+              if (stripRef.current) {
+                stripRef.current.style.transition = "";
+              }
+            }, 1600);
+          }
+        }
+
+        setTimeout(() => setWinnerPopup(false), 6000);
+      } catch (err) {
+        console.error("Erro ao buscar vencedor:", err);
+      }
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [spinning, winner, entries]);
 
   return (
-    <>
+    <div className="relative">
+      {/* Botão Iniciar */}
+      <div className="text-center mt-8">
+        {!spinning && speed === 0 && (
+          <button
+            onClick={iniciarSorteio}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl text-xl shadow-md"
+          >
+            Iniciar Sorteio
+          </button>
+        )}
+      </div>
+
+      {/* Pião */}
       <div className="relative w-[400px] h-[400px] mx-auto overflow-hidden rounded-full bg-black my-12">
         {/* Moldura */}
         <div className="absolute inset-0 rounded-full border-[50px] border-red-700 shadow-[inset_-1px_-2px_0px_3px_rgba(150,0,0,1),inset_-1px_-2px_10px_10px_rgba(0,0,0,0.5),-2px_-2px_0px_3px_rgba(150,0,0,1),-4px_-4px_10px_10px_rgba(0,0,0,0.5)] z-10 pointer-events-none"></div>
@@ -77,18 +145,12 @@ export default function Tentacao({ entries }: { entries: any[] }) {
         <div
           ref={containerRef}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[320px] flex items-center"
-          style={{
-            overflow: "visible",
-            width: containerWidth,
-          }}
+          style={{ overflow: "visible", width: containerWidth }}
         >
-          {/* Faixa horizontal que será movida só na horizontal */}
           <div
             ref={stripRef}
             className="flex h-full"
-            style={{
-              willChange: "transform",
-            }}
+            style={{ willChange: "transform" }}
           >
             {entries.map((entry, idx) => (
               <div
@@ -102,22 +164,22 @@ export default function Tentacao({ entries }: { entries: any[] }) {
         </div>
       </div>
 
-      {/* Botões */}
-      {spinning ? (
-        <button
-          onClick={handleStop}
-          className="mt-12 bg-red-600 text-white px-4 py-2 rounded"
-        >
-          Parar Sorteio
-        </button>
-      ) : (
-        <button
-          onClick={handleStart}
-          className="mt-12 bg-green-600 text-white px-4 py-2 rounded"
-        >
-          Iniciar Sorteio
-        </button>
+      {/* Popup do vencedor */}
+      {winner && winnerPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50">
+          <div className="bg-white p-6 rounded-2xl text-center shadow-xl max-w-md">
+            <h2 className="text-2xl font-bold text-green-700 mb-4">
+              🎉 Vencedor!
+            </h2>
+            <p className="text-lg font-semibold text-gray-800">
+              {winner.chosenBy || "Convidado"} - Nº {winner.number}
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Liberado em: {new Date(winner.chosenAt).toLocaleString()}
+            </p>
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 }

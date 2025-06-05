@@ -86,7 +86,7 @@ export default function Tentacao({ entries }: { entries: any[] }) {
   // Polling para checar vencedor
   useEffect(() => {
     const interval = setInterval(async () => {
-      if (winner || !spinning) return;
+      if (winner) return;
 
       try {
         const res = await api.get("scan/winner");
@@ -96,6 +96,7 @@ export default function Tentacao({ entries }: { entries: any[] }) {
 
         setWinner(data);
         setWinnerPopup(true);
+        setWinner(null);
 
         // Centraliza o vencedor
         const winnerIndex = entries.findIndex(
@@ -119,12 +120,12 @@ export default function Tentacao({ entries }: { entries: any[] }) {
         setTimeout(() => setWinnerPopup(false), 20000);
       } catch (err: any) {
         errorToast("Erro ao buscar vencedor:");
-        console.log(err!.response.data.message);
+        console.log(err?.response?.data?.message || err.message);
       }
     }, 1500);
 
     return () => clearInterval(interval);
-  }, [spinning, winner, entries]);
+  }, [winner, entries]);
 
   return (
     <div className="relative">

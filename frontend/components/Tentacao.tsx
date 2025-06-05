@@ -92,6 +92,8 @@ export default function Tentacao({ entries }: { entries: any[] }) {
         const res = await api.get("scan/winner");
         const data = res.data;
 
+        console.log(data, res);
+
         setWinner(data);
         setWinnerPopup(true);
 
@@ -114,7 +116,7 @@ export default function Tentacao({ entries }: { entries: any[] }) {
           }
         }
 
-        setTimeout(() => setWinnerPopup(false), 6000);
+        setTimeout(() => setWinnerPopup(false), 20000);
       } catch (err: any) {
         errorToast("Erro ao buscar vencedor:");
         console.log(err!.response.data.message);

@@ -3,7 +3,7 @@ import { RaffleEntryModel } from "../models/RaffleEntry";
 
 const router = express.Router();
 
-// Libera o vencedor (ao escanear o QR code)
+// ✅ Libera o vencedor ao escanear o QR code
 router.post("/unlock-winner", async (req, res) => {
   const deviceId = req.headers["device-id"] as string;
 
@@ -18,7 +18,6 @@ router.post("/unlock-winner", async (req, res) => {
     return;
   }
 
-  // Atualiza o entry no banco, marcando como desbloqueado
   const updated = await RaffleEntryModel.findOneAndUpdate(
     { qrcodeToken: token },
     { $set: { unlocked: true, chosenAt: new Date() } },
@@ -34,7 +33,7 @@ router.post("/unlock-winner", async (req, res) => {
   return;
 });
 
-// Consulta o vencedor desbloqueado
+// ✅ Entrega o vencedor desbloqueado uma única vez
 router.get("/winner", async (req, res) => {
   try {
     const entry = await RaffleEntryModel.findOne({ unlocked: true }).sort({
@@ -46,13 +45,19 @@ router.get("/winner", async (req, res) => {
       return;
     }
 
+    // Retorna os dados do vencedor
     res.json({
       number: entry.number,
       chosenBy: entry.chosenBy,
       chosenAt: entry.chosenAt,
       qrcodeToken: entry.qrcodeToken,
     });
-    return;
+
+    // Remove o campo `unlocked` para que ele não seja retornado de novo
+    await RaffleEntryModel.updateOne(
+      { _id: entry._id },
+      { $unset: { unlocked: "" } }
+    );
   } catch (error) {
     console.error("Erro ao buscar vencedor:", error);
     res.status(500).json({ message: "Erro interno no servidor" });

@@ -3,12 +3,10 @@ import { RaffleEntryModel } from "../models/RaffleEntry";
 
 const router = express.Router();
 
-// Variável global para guardar o token do vencedor desbloqueado
-let unlockedWinnerToken: string | null = null;
-
-// Rota para o anfitrião liberar o vencedor (exemplo)
-router.post("/unlock-winner", (req, res) => {
+// Libera o vencedor (ao escanear o QR code)
+router.post("/unlock-winner", async (req, res) => {
   const deviceId = req.headers["device-id"] as string;
+
   if (deviceId !== process.env.HOST_DEVICE_ID) {
     res.status(403).json({ message: "Dispositivo não autorizado" });
     return;
@@ -20,24 +18,31 @@ router.post("/unlock-winner", (req, res) => {
     return;
   }
 
-  unlockedWinnerToken = token;
-  res.json({ success: true, message: "Vencedor desbloqueado." });
-  return;
-});
+  // Atualiza o entry no banco, marcando como desbloqueado
+  const updated = await RaffleEntryModel.findOneAndUpdate(
+    { qrcodeToken: token },
+    { $set: { unlocked: true, chosenAt: new Date() } },
+    { new: true }
+  );
 
-// Rota para o sorteio consultar o vencedor desbloqueado
-router.get("/winner", async (req, res) => {
-  if (!unlockedWinnerToken) {
-    res.status(404).json({ message: "Nenhum vencedor liberado" });
+  if (!updated) {
+    res.status(404).json({ message: "Token não encontrado no banco" });
     return;
   }
 
+  res.json({ success: true, message: "Vencedor desbloqueado" });
+  return;
+});
+
+// Consulta o vencedor desbloqueado
+router.get("/winner", async (req, res) => {
   try {
-    const entry = await RaffleEntryModel.findOne({
-      qrcodeToken: unlockedWinnerToken,
+    const entry = await RaffleEntryModel.findOne({ unlocked: true }).sort({
+      chosenAt: -1,
     });
+
     if (!entry) {
-      res.status(404).json({ message: "Token inválido" });
+      res.status(404).json({ message: "Nenhum vencedor desbloqueado" });
       return;
     }
 
@@ -45,6 +50,7 @@ router.get("/winner", async (req, res) => {
       number: entry.number,
       chosenBy: entry.chosenBy,
       chosenAt: entry.chosenAt,
+      qrcodeToken: entry.qrcodeToken,
     });
     return;
   } catch (error) {

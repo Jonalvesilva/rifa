@@ -83,7 +83,6 @@ export default function Tentacao({ entries }: { entries: any[] }) {
     }, 20000);
   };
 
-  // Polling para checar vencedor
   useEffect(() => {
     const interval = setInterval(async () => {
       if (winner) return;
@@ -92,13 +91,12 @@ export default function Tentacao({ entries }: { entries: any[] }) {
         const res = await api.get("scan/winner");
         const data = res.data;
 
-        console.log(data, res);
+        console.log("🔍 Vencedor encontrado:", data);
 
         setWinner(data);
         setWinnerPopup(true);
-        setWinner(null);
 
-        // Centraliza o vencedor
+        // 👉 Centraliza o QR Code do vencedor
         const winnerIndex = entries.findIndex(
           (e) => e.qrcodeToken === data.qrcodeToken
         );
@@ -117,10 +115,16 @@ export default function Tentacao({ entries }: { entries: any[] }) {
           }
         }
 
-        setTimeout(() => setWinnerPopup(false), 20000);
+        // Oculta o popup depois de 20s
+        setTimeout(() => {
+          setWinnerPopup(false);
+          setWinner(null); // permite detectar um novo desbloqueio
+        }, 20000);
       } catch (err: any) {
-        errorToast("Erro ao buscar vencedor:");
-        console.log(err?.response?.data?.message || err.message);
+        if (err?.response?.status !== 404) {
+          errorToast("Erro ao buscar vencedor:");
+          console.log(err?.response?.data?.message || err.message);
+        }
       }
     }, 1500);
 

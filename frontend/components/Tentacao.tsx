@@ -122,7 +122,7 @@ export default function Tentacao({ entries }: { entries: any[] }) {
         }, 20000);
       } catch (err: any) {
         if (err?.response?.status !== 404) {
-          errorToast("Erro ao buscar vencedor:");
+          //errorToast("Erro ao buscar vencedor:");
           console.log(err?.response?.data?.message || err.message);
         }
       }

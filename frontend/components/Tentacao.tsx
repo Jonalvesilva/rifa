@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import QRCode from "react-qr-code";
 import { api } from "@/utils/api";
+import { errorToast } from "@/utils/toast";
 
 export default function Tentacao({ entries }: { entries: any[] }) {
   const [spinning, setSpinning] = useState(false);
@@ -114,8 +115,9 @@ export default function Tentacao({ entries }: { entries: any[] }) {
         }
 
         setTimeout(() => setWinnerPopup(false), 6000);
-      } catch (err) {
-        console.error("Erro ao buscar vencedor:", err);
+      } catch (err: any) {
+        errorToast("Erro ao buscar vencedor:");
+        console.log(err!.response.data.message);
       }
     }, 1500);
 

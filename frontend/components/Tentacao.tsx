@@ -10,8 +10,10 @@ export default function Tentacao({ entries }: { entries: any[] }) {
   const [winner, setWinner] = useState<any>(null);
   const [winnerPopup, setWinnerPopup] = useState(false);
   const [speed, setSpeed] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   const positionRef = useRef(0);
   const faceWidth = 200 + 16;
@@ -50,6 +52,7 @@ export default function Tentacao({ entries }: { entries: any[] }) {
     setWinnerPopup(false);
     setSpinning(true);
     setSpeed(3.5);
+    handlePlay();
 
     setTimeout(() => {
       let currentSpeed = 3.5;
@@ -60,6 +63,9 @@ export default function Tentacao({ entries }: { entries: any[] }) {
           clearInterval(deceleration);
           setSpeed(0);
           setSpinning(false);
+
+          handlePause();
+          handleReset();
 
           // 👉 Centraliza o QR Code mais próximo do centro
           const offset = containerWidth / 2 - faceWidth / 2;
@@ -130,6 +136,35 @@ export default function Tentacao({ entries }: { entries: any[] }) {
 
     return () => clearInterval(interval);
   }, [winner, entries]);
+
+  useEffect(() => {
+    // Cria o elemento de áudio
+    audioRef.current = new Audio("/tentacao.mp3");
+    audioRef.current.loop = true;
+
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
+
+  const handlePlay = () => {
+    audioRef.current?.play();
+    setIsPlaying(true);
+  };
+
+  const handlePause = () => {
+    audioRef.current?.pause();
+    setIsPlaying(false);
+  };
+
+  const handleReset = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      //audioRef.current.play();
+      //setIsPlaying(true);
+    }
+  };
 
   return (
     <div className="relative">

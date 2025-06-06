@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import QRCode from "react-qr-code";
 import { api } from "@/utils/api";
 import { errorToast } from "@/utils/toast";
+import Fireworks from "./Firework";
 
 export default function Tentacao({ entries }: { entries: any[] }) {
   const [spinning, setSpinning] = useState(false);
@@ -51,11 +52,11 @@ export default function Tentacao({ entries }: { entries: any[] }) {
     setWinner(null);
     setWinnerPopup(false);
     setSpinning(true);
-    setSpeed(3.5);
+    setSpeed(5);
     handlePlay();
 
     setTimeout(() => {
-      let currentSpeed = 3.5;
+      let currentSpeed = 5;
       const deceleration = setInterval(() => {
         currentSpeed -= 0.05;
 
@@ -86,7 +87,7 @@ export default function Tentacao({ entries }: { entries: any[] }) {
           setSpeed(currentSpeed);
         }
       }, 200);
-    }, 20000);
+    }, 30000);
   };
 
   useEffect(() => {
@@ -125,7 +126,7 @@ export default function Tentacao({ entries }: { entries: any[] }) {
         setTimeout(() => {
           setWinnerPopup(false);
           setWinner(null); // permite detectar um novo desbloqueio
-        }, 20000);
+        }, 10000);
       } catch (err: any) {
         if (err?.response?.status !== 404) {
           //errorToast("Erro ao buscar vencedor:");
@@ -211,6 +212,7 @@ export default function Tentacao({ entries }: { entries: any[] }) {
       {/* Popup do vencedor */}
       {winner && winnerPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50">
+          <Fireworks />
           <div className="bg-white p-6 rounded-2xl text-center shadow-xl max-w-md">
             <h2 className="text-2xl font-bold text-green-700 mb-4">
               🎉 Vencedor!

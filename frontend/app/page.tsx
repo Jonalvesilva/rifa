@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { GoldenTicketModal } from "@/components/GoldenTicket";
+import { ImSpinner2 } from "react-icons/im";
 
 export default function Home() {
   const numbers = [...Array(40)].map((_, index) => index + 1);
@@ -22,6 +23,7 @@ export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTicketOpen, setTicketModalOpen] = useState(false);
   const [ticketData, setTicketData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchNumbers = async () => {
@@ -49,6 +51,8 @@ export default function Home() {
       return;
     }
 
+    setLoading(true);
+
     try {
       const response = await api.post(`/choose-number`, {
         number: selected,
@@ -61,12 +65,14 @@ export default function Home() {
       setModalOpen(false);
       setInviteId("");
       setSelected(null);
+      setLoading(false);
 
       // Atualizar números após escolher
       const res = await api.get(`/numbers`);
       setNotChooseNumbers(res.data.availableNumbers);
     } catch (err: any) {
       errorToast(err.response?.data?.message || "Erro ao escolher número");
+      setLoading(false);
     }
   };
 
@@ -80,6 +86,10 @@ export default function Home() {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    setInviteId("");
+  }, [modalOpen]);
 
   return (
     <section className="bg-[url('/teste.jpg')] w-full bg-cover">
@@ -127,7 +137,17 @@ export default function Home() {
               />
 
               <DialogFooter>
-                <Button onClick={handleConfirm}>Confirmar Número</Button>
+                <Button
+                  onClick={handleConfirm}
+                  disabled={loading}
+                  className="md:w-[150px]"
+                >
+                  {loading ? (
+                    <ImSpinner2 className="animate-spin text-white" size={20} />
+                  ) : (
+                    "Confirmar Número"
+                  )}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
